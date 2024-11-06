@@ -15,7 +15,7 @@ class ConvenienceStoreTest {
         )
 
         // when
-        val carts: String = ConvenienceStore.addCart(input)
+        val carts: String = ConvenienceStore().addCart(input)
 
         // then
         assertThat(carts).isEqualTo(result)
