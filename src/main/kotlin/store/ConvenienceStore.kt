@@ -15,7 +15,8 @@ class ConvenienceStore {
 
     fun start() {
         outputView.printProducts(products)
-        inputView.readItem()
+        val items = inputView.readItem()
+        addCart(items)
     }
 
     fun readProductsFile() {
@@ -36,5 +37,15 @@ class ConvenienceStore {
             quantity = productInfo[2],
             promotion = promotion)
         )
+    }
+
+    fun addCart(items: String): List<Cart> {
+        val cartList: MutableList<Cart> = mutableListOf()
+        items.split(",").forEach {
+            val item = it.split("-")
+            cartList.add(Cart(item[0].replace("[", ""),
+                item[1].replace("]", "")))
+        }
+        return cartList
     }
 }

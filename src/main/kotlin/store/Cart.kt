@@ -1,4 +1,6 @@
 package store
 
-class Cart {
-}
+data class Cart(
+    val name: String,
+    val quantity: String,
+)
