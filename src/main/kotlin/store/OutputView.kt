@@ -5,25 +5,42 @@ import java.text.DecimalFormat
 class OutputView {
     val dec = DecimalFormat("#,###")
 
-    fun printProducts(products: List<Product>) {
+    fun printProducts(names: MutableList<String>, products: Map<String, Product>) {
         println("안녕하세요. W편의점입니다.\n현재 보유하고 있는 상품입니다.\n")
-        //TODO: 재고 파일에는 없어도, 프로모션 재고만 있는 상품에 대해 일반 상품의 재고 없음을 알려야 함.
-        // "파일에 있는 상품 목록 출력" 테스트를 실행하였을 때
-        // 현재 ["- 오렌지주스 1,800원 재고 없음", "- 탄산수 1,200원 재고 없음", "- 컵라면 1,700원 10개"] 누락됨.
-
-        products.forEach {
-            var productInfo = "- ${it.name} ${dec.format(it.price)}원"
-            if (it.quantity == "재고 없음") {
-                productInfo += " ${it.quantity}"
-            } else {
-                productInfo += " ${it.quantity}개"
+        names.forEach {
+            var productInfo = ""
+            if (products.getValue(it).getPromotionEvent() != null) {
+                productInfo = "- $it ${dec.format(products.getValue(it).getPromotionPrice()!!.toInt())}원"
+                if (products.getValue(it).getPromotionQuantity() == "0") {
+                    productInfo += " 재고 없음"
+                } else {
+                    productInfo += " ${products.getValue(it).getPromotionQuantity()}개"
+                }
+                productInfo += " ${products.getValue(it).getPromotionEvent()}"
+                productInfo += "\n"
+                print(productInfo)
             }
-            if (it.promotion != null) {
-                productInfo += " ${it.promotion}"
+            productInfo = ""
+            if (products.getValue(it).getPrice() != null) {
+                productInfo = "- $it ${dec.format(products.getValue(it).getPrice()!!.toInt())}원"
+                if (products.getValue(it).getQuantity() == "0") {
+                    productInfo += " 재고 없음"
+                } else {
+                    productInfo += " ${products.getValue(it).getQuantity()}개"
+                }
+                productInfo += "\n"
+                print(productInfo)
             }
-            productInfo += "\n"
-            print(productInfo)
+            productInfo = ""
+            if (products.getValue(it).getPrice() == null && products.getValue(it).getPromotionEvent() != null) {
+                productInfo = "- $it ${dec.format(products.getValue(it).getPromotionPrice()!!.toInt())}원 재고 없음\n"
+                print(productInfo)
+            }
         }
         print("\n")
+    }
+
+    fun printReceipt() {
+
     }
 }
