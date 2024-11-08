@@ -10,8 +10,8 @@ class OutputView {
         names.forEach {
             var productInfo = ""
             if (products.getValue(it).getPromotionEvent() != null) {
-                productInfo = "- $it ${dec.format(products.getValue(it).getPromotionPrice()!!.toInt())}원"
-                if (products.getValue(it).getPromotionQuantity() == "0") {
+                productInfo = "- $it ${dec.format(products.getValue(it).getPrice()!!)}원"
+                if (products.getValue(it).getPromotionQuantity() == 0) {
                     productInfo += " 재고 없음"
                 } else {
                     productInfo += " ${products.getValue(it).getPromotionQuantity()}개"
@@ -21,9 +21,9 @@ class OutputView {
                 print(productInfo)
             }
             productInfo = ""
-            if (products.getValue(it).getPrice() != null) {
-                productInfo = "- $it ${dec.format(products.getValue(it).getPrice()!!.toInt())}원"
-                if (products.getValue(it).getQuantity() == "0") {
+            if (products.getValue(it).getQuantity() != null) {
+                productInfo = "- $it ${dec.format(products.getValue(it).getPrice()!!)}원"
+                if (products.getValue(it).getQuantity() == 0) {
                     productInfo += " 재고 없음"
                 } else {
                     productInfo += " ${products.getValue(it).getQuantity()}개"
@@ -32,8 +32,8 @@ class OutputView {
                 print(productInfo)
             }
             productInfo = ""
-            if (products.getValue(it).getPrice() == null && products.getValue(it).getPromotionEvent() != null) {
-                productInfo = "- $it ${dec.format(products.getValue(it).getPromotionPrice()!!.toInt())}원 재고 없음\n"
+            if (products.getValue(it).getQuantity() == null && products.getValue(it).getPromotionEvent() != null) {
+                productInfo = "- $it ${dec.format(products.getValue(it).getPrice()!!)}원 재고 없음\n"
                 print(productInfo)
             }
         }
