@@ -21,31 +21,83 @@ class ConvenienceStore {
         val items = inputView.readItem()
         customer.cartItems = addCart(items)
         purchaseItems(customer.cartItems)
-        customer.totalPrice = products.values.sumOf { it.price * it.quantity }
-        Receipt().creatReceipt(customer.shoppingItems, customer)
+        customer.totalPrice = customer.shoppingItems.sumOf { it.price * it.quantity }
+        val isMembership = inputView.readMembership()
+        if (isMembership == "Y") {
+            customer.discountPriceMembership()
+        }
+        customer.calculateFinalMoney()
+        val receipt = Receipt().creatReceipt(customer.shoppingItems, customer)
+        outputView.printReceipt(receipt)
+
     }
 
     fun purchaseItems(cart: List<Cart>) {
         cart.forEach {
+            if (products.getValue(it.name).getTotalQuantity() < 1) {
+                // 올바르지 않은 입력 에러 출력
+            }
             reducePromotionQauntity(it)
         }
     }
 
-    private fun reducePromotionQauntity(item: Cart) {
+    private fun reducePromotionQauntity(item: Cart): Boolean {
         var unappliedQuantity = 0
-        var finalQuantity = 0
-        if (products.getValue(item.name).promotionQuantity != 0) {
-            if (item.quantity > products.getValue(item.name).promotionQuantity) {
-                unappliedQuantity = item.quantity - products.getValue(item.name).promotionQuantity
+        val productInfo = products.getValue(item.name)
+        var possiblePromotion = 0
+        var promotionCount = 0
+        if (productInfo.promotionQuantity > 0 && productInfo.promotionEvent != null) {
+            if (item.quantity < productInfo.promotionQuantity) {
+                when(productInfo.promotionEvent) {
+                    "탄산2+1" -> {
+                        possiblePromotion = item.quantity % 3 - 1
+                        promotionCount = 3
+                    }
+                    "MD추천상품" -> {
+                        possiblePromotion = item.quantity % 2
+                        promotionCount = 2
+                    }
+                    "반짝할인" -> {
+                        possiblePromotion = item.quantity % 2
+                        promotionCount = 2
+                    }
+                }
+                if (possiblePromotion == 1) {
+                    val answer = inputView.readBOGO(item.name)
+                    if (answer == "Y") {
+                        customer.totalCount += item.quantity+1
+                        customer.shoppingItems.add(Cart(item.name, item.quantity+1, item.price))
+                        customer.discountEvent += ((productInfo.promotionQuantity+1) / promotionCount) * item.price
+                        return true
+                    }
+                    if (answer == "N") {
+                        customer.totalCount += item.quantity
+                        customer.shoppingItems.add(Cart(item.name, item.quantity, item.price))
+                        customer.discountEvent += (productInfo.promotionQuantity / promotionCount) * item.price
+                        return true
+                    }
+                }
+            } else {
+                unappliedQuantity = item.quantity - productInfo.promotionQuantity
                 val isFullPrice = inputView.readFullPrice(item.name, unappliedQuantity)
                 if (isFullPrice == "Y") {
-                    finalQuantity = item.quantity - unappliedQuantity
+                    customer.totalCount += item.quantity
+                    customer.shoppingItems.add(Cart(item.name, item.quantity, item.price))
+                    return true
                 }
                 if (isFullPrice == "N") {
-                    finalQuantity
+                    customer.totalCount += (item.quantity - unappliedQuantity)
+                    customer.shoppingItems.add(Cart(item.name, item.quantity-unappliedQuantity, item.price))
+                    return true
                 }
             }
         }
+        if (productInfo.quantity > 0 && productInfo.promotionEvent == null) {
+            customer.totalCount += item.quantity
+            customer.shoppingItems.add(Cart(item.name, item.quantity, item.price))
+            return true
+        }
+        return false
     }
 
 //    private fun isDeficient(item: Cart): Boolean { }
@@ -84,7 +136,7 @@ class ConvenienceStore {
         items.split(",").forEach {
             val item = it.split("-")
             val itemName = item[0].replace("[", "")
-            val itemQuantity = item[0].replace("[", "").toInt()
+            val itemQuantity = item[1].replace("]", "").toInt()
             cartList.add(
                 Cart(
                     itemName,

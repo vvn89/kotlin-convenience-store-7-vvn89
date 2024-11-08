@@ -2,5 +2,6 @@ package store
 
 data class Cart(
     val name: String,
-    val quantity: String,
+    val quantity: Int,
+    val price: Int,
 )

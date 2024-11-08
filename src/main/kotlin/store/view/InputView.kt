@@ -1,4 +1,4 @@
-package store
+package store.view
 
 import camp.nextstep.edu.missionutils.Console
 
@@ -15,7 +15,7 @@ class InputView {
         return input
     }
 
-    fun readFullPrice(name: String, quantity: String): String {
+    fun readFullPrice(name: String, quantity: Int): String {
         println("현재 ${name} ${quantity}개는 프로모션 할인이 적용되지 않습니다. 그래도 구매하시겠습니까? (Y/N)")
         val input = Console.readLine()
         return input

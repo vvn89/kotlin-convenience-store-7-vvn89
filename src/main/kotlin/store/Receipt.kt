@@ -8,8 +8,8 @@ class Receipt {
     fun creatReceipt(productInfo: List<Cart>, customer: Customer): String {
         var receipt = "===========W 편의점=============\n" + "상품명\t\t수량\t금액\n"
         productInfo.forEach {
-            val totalPrice: Int = productInfo[0].price * productInfo[0].quantity
-            receipt += "${productInfo[0].name} \t\t${productInfo[0].quantity} \t${dec.format(totalPrice)}\n"
+            val totalPrice: Int = it.price * it.quantity
+            receipt += "${it.name} \t\t${it.quantity} \t${dec.format(totalPrice)}\n"
         }
         if (customer.discountEvent != 0) {
             receipt += "=============증\t정===============\n" +
