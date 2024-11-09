@@ -2,7 +2,6 @@ package store
 
 import store.view.InputView
 import store.view.OutputView
-import java.io.File
 
 class ConvenienceStore {
     private val inputView = InputView()
@@ -27,14 +26,18 @@ class ConvenienceStore {
             customer.discountPriceMembership()
         }
         customer.calculateFinalMoney()
-        val receipt = Receipt().creatReceipt(customer.shoppingItems, customer)
+        var receipt = Receipt().creatReceipt(customer.shoppingItems, customer)
         outputView.printReceipt(receipt)
+        val anythingElse = inputView.readAnythingElse()
+        if (anythingElse == "Y") {
+            start()
+        }
 
     }
 
     fun purchaseItems(cart: List<Cart>) {
         cart.forEach {
-            if (products.getValue(it.name).getTotalQuantity() < 1) {
+            if (products.getValue(it.name).totalQuantity < 1) {
                 // 올바르지 않은 입력 에러 출력
             }
             reducePromotionQauntity(it)
@@ -46,7 +49,7 @@ class ConvenienceStore {
         val productInfo = products.getValue(item.name)
         var possiblePromotion = 0
         var promotionCount = 0
-        if (productInfo.promotionQuantity > 0 && productInfo.promotionEvent != null) {
+        if (productInfo.promotionQuantity > 0 && Date().isContainPromotion(productInfo.promotionEvent!!)) {
             if (item.quantity < productInfo.promotionQuantity) {
                 when(productInfo.promotionEvent) {
                     "탄산2+1" -> {
@@ -100,11 +103,8 @@ class ConvenienceStore {
         return false
     }
 
-//    private fun isDeficient(item: Cart): Boolean { }
-
     private fun readProductsFile() {
-        val path = "src/main/resources/products.md"
-        val productsFileContent = File(path).readLines().drop(1)
+        val productsFileContent = File().read( "src/main/resources/products.md")
         productsFileContent.forEach {
             createProduct(it)
         }
@@ -125,7 +125,7 @@ class ConvenienceStore {
 
         if (productInfo[3] != "null" ) {
             products[name]!!.price = productInfo[1].toInt()
-            products[name]!!.quantity = productInfo[2].toInt()
+            products[name]!!.promotionQuantity = productInfo[2].toInt()
             products[name]!!.promotionEvent = productInfo[3]
         }
 
@@ -147,4 +147,6 @@ class ConvenienceStore {
         }
         return cartList
     }
+
+
 }
