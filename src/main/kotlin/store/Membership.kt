@@ -1,7 +1,0 @@
-package store
-
-class Membership {
-
-
-
-}

@@ -7,146 +7,200 @@ class ConvenienceStore {
     private val inputView = InputView()
     private val outputView = OutputView()
 
-    private var productNames: MutableList<String> = mutableListOf()
-    private var products: MutableMap<String, Product> = mutableMapOf()
-    var customer = Customer()
+    private var products: List<Product> = listOf()
+    private var promotions: List<Promotion> = listOf()
+    private var customer = Customer()
 
     init {
-        readProductsFile()
+        products = File().readProductsFile()
+        promotions = File().readPromotionsFile()
     }
 
     fun start() {
-        outputView.printProducts(productNames, products)
-        val items = inputView.readItem()
+        val items = getItem()
         customer.cartItems = addCart(items)
-        purchaseItems(customer.cartItems)
-        customer.totalPrice = customer.shoppingItems.sumOf { it.price * it.quantity }
+        buyItems(customer.cartItems)
+        val receipt = Receipt(customer)
         val isMembership = inputView.readMembership()
         if (isMembership == "Y") {
-            customer.discountPriceMembership()
+            receipt.setMembershipDiscountPrice()
         }
-        customer.calculateFinalMoney()
-        var receipt = Receipt().creatReceipt(customer.shoppingItems, customer)
         outputView.printReceipt(receipt)
         val anythingElse = inputView.readAnythingElse()
         if (anythingElse == "Y") {
-            start()
+            restart()
         }
-
     }
 
-    fun purchaseItems(cart: List<Cart>) {
-        cart.forEach {
-            if (products.getValue(it.name).totalQuantity < 1) {
-                // 올바르지 않은 입력 에러 출력
+    private fun restart() {
+        customer = Customer()
+        start()
+    }
+
+    private fun getItem(): String {
+        outputView.printProducts(products)
+        return inputView.readItem()
+    }
+
+    private fun findPromotion(item: Product): Promotion? {
+        return promotions.find { it.name == item.name }
+    }
+
+    private fun findProduct(item: Product): Product {
+        return products.find { it.name == item.name }!!
+    }
+
+    private fun findProductWithName(name: String): Product {
+        return products.find { it.name == name }!!
+    }
+
+    fun buyItems(cart: List<Product>) {
+        cart.forEach { item ->
+            if (item.quantity > findProduct(item).getTotalQuantity()) {
+                outputView.printError("[ERROR] 재고 수량을 초과하여 구매할 수 없습니다. 다시 입력해 주세요.")
+                start()
             }
-            reducePromotionQauntity(it)
+            if (findPromotion(item) != null && findPromotion(item)!!.isContainPeriod()) {
+                buyPromotionProduct(item)
+            }
+            buyNormalProduct(item)
         }
     }
 
-    private fun reducePromotionQauntity(item: Cart): Boolean {
-        var unappliedQuantity = 0
-        val productInfo = products.getValue(item.name)
-        var possiblePromotion = 0
-        var promotionCount = 0
-        if (productInfo.promotionQuantity > 0 && Date().isContainPromotion(productInfo.promotionEvent!!)) {
-            if (item.quantity < productInfo.promotionQuantity) {
-                when(productInfo.promotionEvent) {
-                    "탄산2+1" -> {
-                        possiblePromotion = item.quantity % 3 - 1
-                        promotionCount = 3
-                    }
-                    "MD추천상품" -> {
-                        possiblePromotion = item.quantity % 2
-                        promotionCount = 2
-                    }
-                    "반짝할인" -> {
-                        possiblePromotion = item.quantity % 2
-                        promotionCount = 2
-                    }
-                }
-                if (possiblePromotion == 1) {
-                    val answer = inputView.readBOGO(item.name)
-                    if (answer == "Y") {
-                        customer.totalCount += item.quantity+1
-                        customer.shoppingItems.add(Cart(item.name, item.quantity+1, item.price))
-                        customer.discountEvent += ((productInfo.promotionQuantity+1) / promotionCount) * item.price
-                        return true
-                    }
-                    if (answer == "N") {
-                        customer.totalCount += item.quantity
-                        customer.shoppingItems.add(Cart(item.name, item.quantity, item.price))
-                        customer.discountEvent += (productInfo.promotionQuantity / promotionCount) * item.price
-                        return true
-                    }
+    private fun buyNormalProduct(item: Product) {
+        findProduct(item).quantity -= item.quantity
+        val purchasedProducts =
+            Product(name = item.name, price = item.price, quantity = item.quantity)
+        customer.shoppingItems.add(purchasedProducts)
+        customer.shoppingMembershipPrice.add(item.price * item.quantity)
+    }
+
+    private fun buyPromotionProduct(item: Product) {
+        val bundle = findPromotion(item)!!.getBundle()
+        val notBundleCount = item.quantity % bundle
+        if (findProduct(item).promotionQuantity % bundle == 0) {
+            if (item.quantity <= findProduct(item).promotionQuantity) {
+                when {
+                    notBundleCount == 0 -> buyPromotionProductWithBundle(item, 0)
+                    notBundleCount == 1 && bundle == 3 -> buyPromotionProductWithBundle(
+                        item,
+                        notBundleCount
+                    )
+                    else -> checkFreeProduct(item)
                 }
             } else {
-                unappliedQuantity = item.quantity - productInfo.promotionQuantity
-                val isFullPrice = inputView.readFullPrice(item.name, unappliedQuantity)
-                if (isFullPrice == "Y") {
-                    customer.totalCount += item.quantity
-                    customer.shoppingItems.add(Cart(item.name, item.quantity, item.price))
-                    return true
+                val regularCount = item.quantity - findProduct(item).promotionQuantity
+                val isFullPrice = inputView.readFullPrice(item.name, regularCount)
+                when (isFullPrice) {
+                    "Y" -> buyPromotionProductWithBundle(item, regularCount)
+                    "N" -> buyOnlyPromotionProduct(item, regularCount)
                 }
-                if (isFullPrice == "N") {
-                    customer.totalCount += (item.quantity - unappliedQuantity)
-                    customer.shoppingItems.add(Cart(item.name, item.quantity-unappliedQuantity, item.price))
-                    return true
-                }
+                buyPromotionProductWithRegular(item, regularCount)
             }
         }
-        if (productInfo.quantity > 0 && productInfo.promotionEvent == null) {
-            customer.totalCount += item.quantity
-            customer.shoppingItems.add(Cart(item.name, item.quantity, item.price))
-            return true
-        }
-        return false
     }
 
-    private fun readProductsFile() {
-        val productsFileContent = File().read( "src/main/resources/products.md")
-        productsFileContent.forEach {
-            createProduct(it)
-        }
+    private fun buyOnlyPromotionProduct(item: Product, normal: Int) {
+        findProduct(item).promotionQuantity -= (item.quantity - normal)
+        val purchasedProducts =
+            Product(name = item.name, price = item.price, quantity = (item.quantity - normal))
+        customer.shoppingItems.add(purchasedProducts)
+        customer.shoppingPromotionItems.add(
+            Product(
+                name = item.name,
+                price = item.price,
+                quantity = (item.quantity - normal) / findPromotion(item)!!.getBundle()
+            )
+        )
+        item.quantity = 0 + normal
     }
 
-    private fun createProduct(productInformation: String) {
-        val productInfo = productInformation.split(",")
-        val name = productInfo[0]
-        if (!productNames.contains(name)) {
-            products[name] = Product()
-            productNames += name
-        }
-
-        if (productInfo[3] == "null") {
-            products[name]!!.price = productInfo[1].toInt()
-            products[name]!!.quantity = productInfo[2].toInt()
-        }
-
-        if (productInfo[3] != "null" ) {
-            products[name]!!.price = productInfo[1].toInt()
-            products[name]!!.promotionQuantity = productInfo[2].toInt()
-            products[name]!!.promotionEvent = productInfo[3]
-        }
-
+    private fun buyPromotionProductWithRegular(item: Product, regularCount: Int) {
+        findProduct(item).promotionQuantity -= (item.quantity - regularCount)
+        val purchasedProducts =
+            Product(name = item.name, price = item.price, quantity = (item.quantity - regularCount))
+        customer.shoppingItems.add(purchasedProducts)
+        customer.shoppingPromotionItems.add(
+            Product(
+                name = item.name,
+                price = item.price,
+                quantity = (item.quantity - regularCount) / findPromotion(item)!!.getBundle()
+            )
+        )
+        item.quantity = 0 + regularCount
     }
 
-    fun addCart(items: String): List<Cart> {
-        val cartList: MutableList<Cart> = mutableListOf()
-        items.split(",").forEach {
+    private fun buyPromotionProductWithBundle(item: Product, normal: Int) {
+        findProduct(item).promotionQuantity -= (item.quantity - normal)
+        val purchasedProducts =
+            Product(name = item.name, price = item.price, quantity = (item.quantity - normal))
+        customer.shoppingItems.add(purchasedProducts)
+        customer.shoppingPromotionItems.add(
+            Product(
+                name = item.name,
+                price = item.price,
+                quantity = (item.quantity - normal) / findPromotion(item)!!.getBundle()
+            )
+        )
+        item.quantity = 0 + normal
+    }
+
+    private fun checkFreeProduct(item: Product) {
+        do {
+            val checkFree: String = inputView.readBOGO(item.name)
+            var again = false
+            when (checkFree) {
+                "Y" -> buyWithFreeProduct(item)
+                "N" -> buyWithoutFreeProduct(item)
+                else -> again = true
+            }
+        } while (again)
+    }
+
+    private fun buyWithFreeProduct(item: Product) {
+        findProduct(item).promotionQuantity -= (item.quantity + 1)
+        val purchasedProducts =
+            Product(name = item.name, price = item.price, quantity = (item.quantity + 1))
+        customer.shoppingItems.add(purchasedProducts)
+        customer.shoppingPromotionItems.add(
+            Product(
+                name = item.name,
+                price = item.price,
+                quantity = (item.quantity + 1) / findPromotion(item)!!.getBundle()
+            )
+        )
+        item.quantity = 0
+    }
+
+    private fun buyWithoutFreeProduct(item: Product) {
+        findProduct(item).promotionQuantity -= (item.quantity)
+        val purchasedProducts =
+            Product(name = item.name, price = item.price, quantity = (item.quantity))
+        customer.shoppingItems.add(purchasedProducts)
+        customer.shoppingPromotionItems.add(
+            Product(
+                name = item.name,
+                price = item.price,
+                quantity = (item.quantity) / findPromotion(item)!!.getBundle()
+            )
+        )
+        item.quantity = 0
+    }
+
+    private fun addCart(itemsInput: String): List<Product> {
+        val cartList: MutableList<Product> = mutableListOf()
+        itemsInput.split(",").forEach {
             val item = it.split("-")
             val itemName = item[0].replace("[", "")
             val itemQuantity = item[1].replace("]", "").toInt()
             cartList.add(
-                Cart(
-                    itemName,
-                    itemQuantity,
-                    products.getValue(itemName).price,
+                Product(
+                    name = itemName,
+                    quantity = itemQuantity,
+                    price = findProductWithName(itemName).price
                 )
             )
         }
         return cartList
     }
-
-
 }

@@ -7,42 +7,62 @@ import java.text.DecimalFormat
 class OutputView {
     val dec = DecimalFormat("#,###")
 
-    fun printProducts(names: MutableList<String>, products: Map<String, Product>) {
+    fun printProducts(products: List<Product>) {
         println("안녕하세요. W편의점입니다.\n현재 보유하고 있는 상품입니다.\n")
-        names.forEach {
+        products.forEach {
             var productInfo = ""
-            if (products.getValue(it).promotionEvent != null) {
-                productInfo = "- $it ${dec.format(products.getValue(it).price)}원"
-                if (products.getValue(it).promotionQuantity == 0) {
+            if (it.promotionName != null) {
+                productInfo = "- ${it.name} ${dec.format(it.price)}원"
+                if (it.promotionQuantity == 0) {
                     productInfo += " 재고 없음"
                 } else {
-                    productInfo += " ${products.getValue(it).promotionQuantity}개"
+                    productInfo += " ${it.promotionQuantity}개"
                 }
-                productInfo += " ${products.getValue(it).promotionEvent}"
+                productInfo += " ${it.promotionName}"
                 productInfo += "\n"
                 print(productInfo)
             }
-            productInfo = ""
-            if (products.getValue(it).quantity != null) {
-                productInfo = "- $it ${dec.format(products.getValue(it).price)}원"
-                if (products.getValue(it).quantity == 0) {
+            if (it.quantity != 0) {
+                productInfo = "- ${it.name} ${dec.format(it.price)}원"
+                if (it.quantity == 0) {
                     productInfo += " 재고 없음"
                 } else {
-                    productInfo += " ${products.getValue(it).quantity}개"
+                    productInfo += " ${it.quantity}개"
                 }
                 productInfo += "\n"
                 print(productInfo)
             }
-            productInfo = ""
-            if (products.getValue(it).quantity == null && products.getValue(it).promotionEvent != null) {
-                productInfo = "- $it ${dec.format(products.getValue(it).price)}원 재고 없음\n"
+            if (it.quantity == 0 && it.promotionName != null) {
+                productInfo = "- ${it.name} ${dec.format(it.price)}원 재고 없음\n"
                 print(productInfo)
             }
         }
         print("\n")
     }
 
-    fun printReceipt(receipt: String) {
-        println(receipt)
+    fun printReceipt(receipt: Receipt) {
+        println("===========W 편의점=============")
+        println("상품명\t\t수량\t금액")
+        receipt.customerInfo.shoppingItems.forEach {
+            val price: Int = it.price * it.quantity
+            println("${it.name} \t\t${it.quantity} \t${dec.format(price)}")
+        }
+        if (receipt.promotionDiscountCost != 0) {
+            println("=============증\t정===============")
+            receipt.customerInfo.shoppingPromotionItems.forEach {
+                println("${it.name}\t\t${it.quantity}\n")
+            }
+        }
+        println("==============================")
+        println("총구매액\t\t${dec.format(receipt.totalProductCount)}\t${dec.format(receipt.totalFirstCost)}")
+        if (receipt.promotionDiscountCost != 0) {
+            println("행사할인\t\t\t-${dec.format(receipt.promotionDiscountCost)}")
+        }
+        println("멤버쉽할인\t\t\t-${dec.format(receipt.membershipDiscountCost)}")
+        println("내실돈\t\t\t ${dec.format(receipt.totalFinalCost)}")
+    }
+
+    fun printError(message: String) {
+        println(message)
     }
 }
