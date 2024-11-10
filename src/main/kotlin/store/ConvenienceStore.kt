@@ -26,15 +26,15 @@ class ConvenienceStore {
             receipt.setMembershipDiscountPrice()
         }
         outputView.printReceipt(receipt)
-        val anythingElse = inputView.readAnythingElse()
-        if (anythingElse == "Y") {
-            restart()
-        }
+        restart()
     }
 
     private fun restart() {
-        customer = Customer()
-        start()
+        val anythingElse = inputView.readAnythingElse()
+        if (anythingElse == "Y") {
+            customer = Customer()
+            start()
+        }
     }
 
     private fun getItem(): String {
@@ -58,7 +58,6 @@ class ConvenienceStore {
         cart.forEach { item ->
             if (item.quantity > findProduct(item).getTotalQuantity()) {
                 outputView.printError("[ERROR] 재고 수량을 초과하여 구매할 수 없습니다. 다시 입력해 주세요.")
-                start()
             }
             if (findPromotion(item) != null && findPromotion(item)!!.isContainPeriod()) {
                 buyPromotionProduct(item)

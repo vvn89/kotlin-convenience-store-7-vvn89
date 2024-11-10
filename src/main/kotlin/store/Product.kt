@@ -8,6 +8,6 @@ data class Product(
     var promotionName: String? = null,
 ) {
     fun getTotalQuantity(): Int {
-        return price + promotionQuantity
+        return quantity + promotionQuantity
     }
 }
