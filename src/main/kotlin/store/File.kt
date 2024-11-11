@@ -21,32 +21,36 @@ class File {
     private fun createProduct(productInformation: String) {
         val productInfo = productInformation.split(SEPARATOR)
         val alreadyExist = product.find { it.name == productInfo[0] }
-        if (alreadyExist == null) {
-            if (productInfo[3] == NULL_STRING) {
-                product.add(
-                    Product(
-                        name = productInfo[0],
-                        price = productInfo[1].toInt(),
-                        quantity = productInfo[2].toInt()
-                    )
-                )
-            }
-            if (productInfo[3] != NULL_STRING) {
-                product.add(
-                    Product(
-                        name = productInfo[0],
-                        price = productInfo[1].toInt(),
-                        promotionQuantity = productInfo[2].toInt(),
-                        promotionName = productInfo[3]
-                    )
-                )
+        when {
+            alreadyExist == null && productInfo[3] == NULL_STRING -> addRegularProduct(productInfo)
+            alreadyExist == null && productInfo[3] != NULL_STRING -> addPromotionProduct(productInfo)
+            alreadyExist != null -> {
+                if (productInfo[3] == NULL_STRING) {
+                    alreadyExist.quantity = productInfo[2].toInt()
+                }
             }
         }
-        if (alreadyExist != null) {
-            if (productInfo[3] == NULL_STRING) {
-                alreadyExist.quantity = productInfo[2].toInt()
-            }
-        }
+    }
+
+    private fun addPromotionProduct(productInfo: List<String>) {
+        product.add(
+            Product(
+                name = productInfo[0],
+                price = productInfo[1].toInt(),
+                promotionQuantity = productInfo[2].toInt(),
+                promotionName = productInfo[3]
+            )
+        )
+    }
+
+    private fun addRegularProduct(productInfo: List<String>) {
+        product.add(
+            Product(
+                name = productInfo[0],
+                price = productInfo[1].toInt(),
+                quantity = productInfo[2].toInt()
+            )
+        )
     }
 
     fun readPromotionsFile(): List<Promotion> {
