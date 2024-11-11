@@ -5,4 +5,5 @@ data class Customer(
     var shoppingItems: MutableList<Product> = mutableListOf(),
     var shoppingPromotionItems: MutableList<Product> = mutableListOf(),
     var shoppingMembershipPrice: MutableList<Int> = mutableListOf(),
+    var summationQuantity: MutableMap<String, Int> = mutableMapOf()
 )

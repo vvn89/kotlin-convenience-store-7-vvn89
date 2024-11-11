@@ -1,6 +1,6 @@
 package store
 
-import java.time.LocalDate
+import camp.nextstep.edu.missionutils.DateTimes
 
 data class Promotion(
     val name: String,
@@ -19,9 +19,9 @@ data class Promotion(
     }
 
     fun isContainPeriod(): Boolean {
-        val today = LocalDate.now()
-        val startDate = LocalDate.parse(stareDate)
-        val endDate = LocalDate.parse(endDate)
+        val today = DateTimes.now().toString().split("T")[0]
+        val startDate = stareDate
+        val endDate = endDate
         return today in startDate .. endDate
     }
 }

@@ -20,6 +20,7 @@ class ConvenienceStore {
         val items = getItem()
         customer.cartItems = addCart(items)
         buyItems(customer.cartItems)
+        summary(customer.shoppingItems)
         val receipt = Receipt(customer)
         val isMembership = inputView.readMembership()
         if (isMembership == "Y") {
@@ -27,6 +28,12 @@ class ConvenienceStore {
         }
         outputView.printReceipt(receipt)
         restart()
+    }
+
+    private fun summary(shoppingItems: MutableList<Product>) {
+        shoppingItems.forEach {
+            customer.summationQuantity[it.name] = customer.summationQuantity[it.name]?.plus(it.quantity) ?: it.quantity
+        }
     }
 
     private fun restart() {
@@ -43,7 +50,8 @@ class ConvenienceStore {
     }
 
     private fun findPromotion(item: Product): Promotion? {
-        return promotions.find { it.name == item.name }
+        val promotionName = products.find { it.name == item.name }!!.promotionName
+        return promotions.find { it.name == promotionName }
     }
 
     private fun findProduct(item: Product): Product {
@@ -58,6 +66,7 @@ class ConvenienceStore {
         cart.forEach { item ->
             if (item.quantity > findProduct(item).getTotalQuantity()) {
                 outputView.printError("[ERROR] 재고 수량을 초과하여 구매할 수 없습니다. 다시 입력해 주세요.")
+                restart()
             }
             if (findPromotion(item) != null && findPromotion(item)!!.isContainPeriod()) {
                 buyPromotionProduct(item)
@@ -77,26 +86,26 @@ class ConvenienceStore {
     private fun buyPromotionProduct(item: Product) {
         val bundle = findPromotion(item)!!.getBundle()
         val notBundleCount = item.quantity % bundle
-        if (findProduct(item).promotionQuantity % bundle == 0) {
-            if (item.quantity <= findProduct(item).promotionQuantity) {
-                when {
-                    notBundleCount == 0 -> buyPromotionProductWithBundle(item, 0)
-                    notBundleCount == 1 && bundle == 3 -> buyPromotionProductWithBundle(
-                        item,
-                        notBundleCount
-                    )
-                    else -> checkFreeProduct(item)
-                }
-            } else {
-                val regularCount = item.quantity - findProduct(item).promotionQuantity
-                val isFullPrice = inputView.readFullPrice(item.name, regularCount)
-                when (isFullPrice) {
-                    "Y" -> buyPromotionProductWithBundle(item, regularCount)
-                    "N" -> buyOnlyPromotionProduct(item, regularCount)
-                }
-                buyPromotionProductWithRegular(item, regularCount)
+        if (item.quantity <= findProduct(item).promotionQuantity) {
+            when {
+                notBundleCount == 0 -> buyPromotionProductWithBundle(item, 0)
+                notBundleCount == 1 && bundle == 3 -> buyPromotionProductWithBundle(
+                    item,
+                    notBundleCount
+                )
+
+                else -> checkFreeProduct(item)
             }
+        } else {
+            val regularCount = item.quantity - findProduct(item).promotionQuantity
+            val isFullPrice = inputView.readFullPrice(item.name, regularCount)
+            when (isFullPrice) {
+                "Y" -> buyPromotionProductWithBundle(item, regularCount)
+                "N" -> buyOnlyPromotionProduct(item, regularCount)
+            }
+            buyPromotionProductWithRegular(item, regularCount)
         }
+
     }
 
     private fun buyOnlyPromotionProduct(item: Product, normal: Int) {

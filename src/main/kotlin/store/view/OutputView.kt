@@ -41,19 +41,25 @@ class OutputView {
     }
 
     fun printReceipt(receipt: Receipt) {
-        println("===========W 편의점=============")
+        println("==============W 편의점================")
         println("상품명\t\t수량\t금액")
         receipt.customerInfo.shoppingItems.forEach {
-            val price: Int = it.price * it.quantity
-            println("${it.name} \t\t${it.quantity} \t${dec.format(price)}")
-        }
-        if (receipt.promotionDiscountCost != 0) {
-            println("=============증\t정===============")
-            receipt.customerInfo.shoppingPromotionItems.forEach {
-                println("${it.name}\t\t${it.quantity}\n")
+            if (receipt.customerInfo.summationQuantity[it.name] != 0) {
+                val quantity = receipt.customerInfo.summationQuantity[it.name]
+                val price: Int = it.price * quantity!!
+                println("${it.name} \t\t${quantity} \t${dec.format(price)}")
+                receipt.customerInfo.summationQuantity[it.name] = 0
             }
         }
-        println("==============================")
+        if (receipt.promotionDiscountCost != 0) {
+            println("=============증\t\t정===============")
+            receipt.customerInfo.shoppingPromotionItems.forEach {
+                if (it.quantity != 0) {
+                    println("${it.name}\t\t${it.quantity}")
+                }
+            }
+        }
+        println("====================================")
         println("총구매액\t\t${dec.format(receipt.totalProductCount)}\t${dec.format(receipt.totalFirstCost)}")
         if (receipt.promotionDiscountCost != 0) {
             println("행사할인\t\t\t-${dec.format(receipt.promotionDiscountCost)}")
