@@ -24,11 +24,7 @@ class File {
         when {
             alreadyExist == null && productInfo[3] == NULL_STRING -> addRegularProduct(productInfo)
             alreadyExist == null && productInfo[3] != NULL_STRING -> addPromotionProduct(productInfo)
-            alreadyExist != null -> {
-                if (productInfo[3] == NULL_STRING) {
-                    alreadyExist.quantity = productInfo[2].toInt()
-                }
-            }
+            alreadyExist != null && productInfo[3] == NULL_STRING -> alreadyExist.quantity = productInfo[2].toInt()
         }
     }
 

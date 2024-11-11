@@ -99,33 +99,35 @@ class ConvenienceStore {
     private fun buyPromotionProduct(item: Product) {
         val bundle = findPromotion(item)!!.getBundle()
         val notBundleCount = item.quantity % bundle
-        if (item.quantity <= findProduct(item).promotionQuantity) {
-            when {
-                notBundleCount == 0 -> buyPromotionProductWithBundle(item, 0)
-                notBundleCount == 1 && bundle == 3 -> buyPromotionProductWithBundle(
-                    item,
-                    notBundleCount
-                )
-
-                else -> checkFreeProduct(item)
-            }
-        } else {
-            val regularCount = item.quantity - findProduct(item).promotionQuantity
-            var isFullPrice = inputView.readFullPrice(item.name, regularCount)
-            while (true) {
-                if (isFullPrice == YES || isFullPrice == NO) {
-                    break
-                }
-                outputView.printError(ERROR_INVALID_INPUT_MESSAGE)
-                isFullPrice = inputView.readFullPrice(item.name, regularCount)
-            }
-            when (isFullPrice) {
-                YES -> buyPromotionProductWithBundle(item, regularCount)
-                NO -> buyOnlyPromotionProduct(item, regularCount)
-            }
-            buyPromotionProductWithRegular(item, regularCount)
+        when {
+            item.quantity <= findProduct(item).promotionQuantity && notBundleCount == 0 -> buyPromotionProductWithBundle(item, 0)
+            item.quantity <= findProduct(item).promotionQuantity && notBundleCount == 1 && bundle == 3 -> buyPromotionProductWithBundle(
+                item,
+                notBundleCount
+            )
+            else -> checkFreeProduct(item)
+        }
+        if (item.quantity > findProduct(item).promotionQuantity) {
+            buyOverQuantity(item)
         }
 
+    }
+
+    private fun buyOverQuantity(item: Product) {
+        val regularCount = item.quantity - findProduct(item).promotionQuantity
+        var isFullPrice = inputView.readFullPrice(item.name, regularCount)
+        while (true) {
+            if (isFullPrice == YES || isFullPrice == NO) {
+                break
+            }
+            outputView.printError(ERROR_INVALID_INPUT_MESSAGE)
+            isFullPrice = inputView.readFullPrice(item.name, regularCount)
+        }
+        when (isFullPrice) {
+            YES -> buyPromotionProductWithBundle(item, regularCount)
+            NO -> buyOnlyPromotionProduct(item, regularCount)
+        }
+        buyPromotionProductWithRegular(item, regularCount)
     }
 
     private fun buyOnlyPromotionProduct(item: Product, normal: Int) {
