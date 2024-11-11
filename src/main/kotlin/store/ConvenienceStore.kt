@@ -32,7 +32,8 @@ class ConvenienceStore {
 
     private fun summary(shoppingItems: MutableList<Product>) {
         shoppingItems.forEach {
-            customer.summationQuantity[it.name] = customer.summationQuantity[it.name]?.plus(it.quantity) ?: it.quantity
+            customer.summationQuantity[it.name] =
+                customer.summationQuantity[it.name]?.plus(it.quantity) ?: it.quantity
         }
     }
 

@@ -22,6 +22,6 @@ data class Promotion(
         val today = DateTimes.now().toString().split("T")[0]
         val startDate = stareDate
         val endDate = endDate
-        return today in startDate .. endDate
+        return today in startDate..endDate
     }
 }
