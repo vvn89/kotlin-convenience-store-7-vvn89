@@ -17,12 +17,24 @@ class ConvenienceStore {
     }
 
     fun start() {
-        val items = getItem()
-        customer.cartItems = addCart(items)
+        try {
+            val items = getItem()
+            customer.cartItems = addCart(items)
+        } catch (e: IndexOutOfBoundsException) {
+            outputView.printError("[ERROR] 올바르지 않은 형식으로 입력했습니다. 다시 입력해 주세요.")
+            start()
+        }
         buyItems(customer.cartItems)
         summary(customer.shoppingItems)
         val receipt = Receipt(customer)
-        val isMembership = inputView.readMembership()
+        var isMembership = inputView.readMembership()
+        while (true) {
+            if (isMembership == "Y" || isMembership == "N") {
+                break
+            }
+            outputView.printError("[ERROR] 올바르지 않은 형식으로 입력했습니다. 다시 입력해 주세요.")
+            isMembership = inputView.readMembership()
+        }
         if (isMembership == "Y") {
             receipt.setMembershipDiscountPrice()
         }

@@ -22,20 +22,18 @@ class OutputView {
                 productInfo += "\n"
                 print(productInfo)
             }
-            if (it.quantity != 0) {
-                productInfo = "- ${it.name} ${dec.format(it.price)}원"
-                if (it.quantity == 0) {
-                    productInfo += " 재고 없음"
-                } else {
-                    productInfo += " ${it.quantity}개"
-                }
-                productInfo += "\n"
-                print(productInfo)
+            productInfo = "- ${it.name} ${dec.format(it.price)}원"
+            if (it.quantity == 0) {
+                productInfo += " 재고 없음"
+            } else {
+                productInfo += " ${it.quantity}개"
             }
-            if (it.quantity == 0 && it.promotionName != null) {
-                productInfo = "- ${it.name} ${dec.format(it.price)}원 재고 없음\n"
-                print(productInfo)
-            }
+            productInfo += "\n"
+            print(productInfo)
+//            if (it.quantity == 0 && it.promotionName != null) {
+//                productInfo = "- ${it.name} ${dec.format(it.price)}원 재고 없음\n"
+//                print(productInfo)
+//            }
         }
         print("\n")
     }
