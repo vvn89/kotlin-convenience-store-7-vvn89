@@ -21,7 +21,7 @@ class ConvenienceStore {
             val items = getItem()
             customer.cartItems = addCart(items)
         } catch (e: IndexOutOfBoundsException) {
-            outputView.printError("[ERROR] 올바르지 않은 형식으로 입력했습니다. 다시 입력해 주세요.")
+            outputView.printError(ERROR_INVALID_INPUT_FORM_MESSAGE)
             start()
         }
         buyItems(customer.cartItems)
@@ -29,13 +29,13 @@ class ConvenienceStore {
         val receipt = Receipt(customer)
         var isMembership = inputView.readMembership()
         while (true) {
-            if (isMembership == "Y" || isMembership == "N") {
+            if (isMembership == YES || isMembership == NO) {
                 break
             }
-            outputView.printError("[ERROR] 올바르지 않은 형식으로 입력했습니다. 다시 입력해 주세요.")
+            outputView.printError(ERROR_INVALID_INPUT_MESSAGE)
             isMembership = inputView.readMembership()
         }
-        if (isMembership == "Y") {
+        if (isMembership == YES) {
             receipt.setMembershipDiscountPrice()
         }
         outputView.printReceipt(receipt)
@@ -51,7 +51,7 @@ class ConvenienceStore {
 
     private fun restart() {
         val anythingElse = inputView.readAnythingElse()
-        if (anythingElse == "Y") {
+        if (anythingElse == YES) {
             customer = Customer()
             start()
         }
@@ -78,7 +78,7 @@ class ConvenienceStore {
     fun buyItems(cart: List<Product>) {
         cart.forEach { item ->
             if (item.quantity > findProduct(item).getTotalQuantity()) {
-                outputView.printError("[ERROR] 재고 수량을 초과하여 구매할 수 없습니다. 다시 입력해 주세요.")
+                outputView.printError(ERROR_INVALID_QUANTITY_MESSAGE)
                 restart()
             }
             if (findPromotion(item) != null && findPromotion(item)!!.isContainPeriod()) {
@@ -111,10 +111,17 @@ class ConvenienceStore {
             }
         } else {
             val regularCount = item.quantity - findProduct(item).promotionQuantity
-            val isFullPrice = inputView.readFullPrice(item.name, regularCount)
+            var isFullPrice = inputView.readFullPrice(item.name, regularCount)
+            while (true) {
+                if (isFullPrice == YES || isFullPrice == NO) {
+                    break
+                }
+                outputView.printError(ERROR_INVALID_INPUT_MESSAGE)
+                isFullPrice = inputView.readFullPrice(item.name, regularCount)
+            }
             when (isFullPrice) {
-                "Y" -> buyPromotionProductWithBundle(item, regularCount)
-                "N" -> buyOnlyPromotionProduct(item, regularCount)
+                YES -> buyPromotionProductWithBundle(item, regularCount)
+                NO -> buyOnlyPromotionProduct(item, regularCount)
             }
             buyPromotionProductWithRegular(item, regularCount)
         }
@@ -171,9 +178,12 @@ class ConvenienceStore {
             val checkFree: String = inputView.readBOGO(item.name)
             var again = false
             when (checkFree) {
-                "Y" -> buyWithFreeProduct(item)
-                "N" -> buyWithoutFreeProduct(item)
-                else -> again = true
+                YES -> buyWithFreeProduct(item)
+                NO -> buyWithoutFreeProduct(item)
+                else -> {
+                    outputView.printError(ERROR_INVALID_INPUT_MESSAGE)
+                    again = true
+                }
             }
         } while (again)
     }
@@ -210,10 +220,10 @@ class ConvenienceStore {
 
     private fun addCart(itemsInput: String): List<Product> {
         val cartList: MutableList<Product> = mutableListOf()
-        itemsInput.split(",").forEach {
-            val item = it.split("-")
-            val itemName = item[0].replace("[", "")
-            val itemQuantity = item[1].replace("]", "").toInt()
+        itemsInput.split(SEPARATOR).forEach {
+            val item = it.split(CONNECTOR)
+            val itemName = item[0].replace(FORM_PREFIX, "")
+            val itemQuantity = item[1].replace(FORM_SUFFIX, "").toInt()
             cartList.add(
                 Product(
                     name = itemName,
@@ -223,5 +233,18 @@ class ConvenienceStore {
             )
         }
         return cartList
+    }
+
+    companion object {
+        const val ERROR_INVALID_INPUT_MESSAGE = "[ERROR] 잘못된 입력입니다. 다시 입력해 주세요."
+        const val ERROR_INVALID_INPUT_FORM_MESSAGE = "[ERROR] 올바르지 않은 형식으로 입력했습니다. 다시 입력해 주세요."
+        const val ERROR_INVALID_QUANTITY_MESSAGE = "[ERROR] 재고 수량을 초과하여 구매할 수 없습니다. 다시 입력해 주세요."
+
+        const val SEPARATOR = ","
+        const val CONNECTOR = "-"
+        const val FORM_PREFIX = "["
+        const val FORM_SUFFIX = "]"
+        const val YES = "Y"
+        const val NO = "N"
     }
 }

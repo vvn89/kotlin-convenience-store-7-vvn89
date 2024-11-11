@@ -19,9 +19,13 @@ data class Promotion(
     }
 
     fun isContainPeriod(): Boolean {
-        val today = DateTimes.now().toString().split("T")[0]
+        val today = DateTimes.now().toString().split(TIME_SEPARATOR)[0]
         val startDate = stareDate
         val endDate = endDate
         return today in startDate..endDate
+    }
+
+    companion object {
+        const val TIME_SEPARATOR = "T"
     }
 }

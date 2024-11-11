@@ -11,7 +11,7 @@ class File {
     }
 
     fun readProductsFile(): MutableList<Product> {
-        val productsFileContent = File().read("src/main/resources/products.md")
+        val productsFileContent = File().read(PRODUCT_FILE_PATH)
         productsFileContent.forEach {
             createProduct(it)
         }
@@ -19,10 +19,10 @@ class File {
     }
 
     private fun createProduct(productInformation: String) {
-        val productInfo = productInformation.split(",")
+        val productInfo = productInformation.split(SEPARATOR)
         val alreadyExist = product.find { it.name == productInfo[0] }
         if (alreadyExist == null) {
-            if (productInfo[3] == "null") {
+            if (productInfo[3] == NULL_STRING) {
                 product.add(
                     Product(
                         name = productInfo[0],
@@ -31,7 +31,7 @@ class File {
                     )
                 )
             }
-            if (productInfo[3] != "null") {
+            if (productInfo[3] != NULL_STRING) {
                 product.add(
                     Product(
                         name = productInfo[0],
@@ -43,14 +43,14 @@ class File {
             }
         }
         if (alreadyExist != null) {
-            if (productInfo[3] == "null") {
+            if (productInfo[3] == NULL_STRING) {
                 alreadyExist.quantity = productInfo[2].toInt()
             }
         }
     }
 
     fun readPromotionsFile(): List<Promotion> {
-        val promotionsFileContent = File().read("src/main/resources/promotions.md")
+        val promotionsFileContent = File().read(PROMOTION_FILE_PATH)
         promotionsFileContent.forEach {
             createPromotionInfo(it)
         }
@@ -58,7 +58,7 @@ class File {
     }
 
     private fun createPromotionInfo(event: String) {
-        val promotionInfo = event.split(",")
+        val promotionInfo = event.split(SEPARATOR)
         promotions.add(
             Promotion(
                 name = promotionInfo[0],
@@ -68,5 +68,12 @@ class File {
                 endDate = promotionInfo[4]
             )
         )
+    }
+
+    companion object {
+        const val SEPARATOR = ","
+        const val NULL_STRING = "null"
+        const val PRODUCT_FILE_PATH = "src/main/resources/products.md"
+        const val PROMOTION_FILE_PATH = "src/main/resources/promotions.md"
     }
 }

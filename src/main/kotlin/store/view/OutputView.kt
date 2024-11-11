@@ -24,16 +24,11 @@ class OutputView {
             }
             productInfo = "- ${it.name} ${dec.format(it.price)}원"
             if (it.quantity == 0) {
-                productInfo += " 재고 없음"
+                productInfo += " 재고 없음\n"
             } else {
-                productInfo += " ${it.quantity}개"
+                productInfo += " ${it.quantity}개\n"
             }
-            productInfo += "\n"
             print(productInfo)
-//            if (it.quantity == 0 && it.promotionName != null) {
-//                productInfo = "- ${it.name} ${dec.format(it.price)}원 재고 없음\n"
-//                print(productInfo)
-//            }
         }
         print("\n")
     }
